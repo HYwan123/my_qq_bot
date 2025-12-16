@@ -2,14 +2,16 @@ import asyncio
 from websockets import ClientConnection
 import json
 from websockets.asyncio.client import connect
-
+from app.util.openai_client import OpenaiClient
 from app.util.aio_http_client import AioHttpClient
+import logging
 
 async def reconnect() -> ClientConnection:
-    print("触发重连")
+    logging.warning("触发重连")
     ws = await connect(
         'ws://10.0.0.1:3002',
-        additional_headers={'Authorization': 'Bearer Qqwe123123'}
+        additional_headers={'Authorization': 'Bearer Qqwe123123'},
+        ping_interval=None,
         )
     return ws
 
@@ -31,16 +33,16 @@ async def send_message_to_user(ws: ClientConnection, userid: str, text: str, tim
     try:
         # 给发送操作加超时，避免卡住
         await asyncio.wait_for(ws.send(json.dumps(payload)), timeout=timeout)
-        print(f"消息已发送给 {userid}")
+        logging.info(f"消息已发送给 {userid}")
     except asyncio.TimeoutError:
-        print(f"发送消息超时: {userid}")
+        logging.error(f"发送消息超时: {userid}")
     except Exception as e:
-        print(f"发送消息出错: {e}")
+        logging.error(f"发送消息出错: {e}")
         try:
             ws = await reconnect()
             return ws
         except Exception as recon_e:
-            print(f"重连失败: {recon_e}")
+            logging.error(f"重连失败: {recon_e}")
 
     finally:
         return ws
@@ -82,12 +84,63 @@ def extract_event_info(event: dict) -> dict:
     }
 
 
-def insert_to_memory_dict(data: dict):
-    pass
+def insert_to_memory_dict(data: dict, memory: dict):
+    if str(data['user_id']) == '3801230796':
+        user = data['target_id']
+        character = 'assistant'
+        if user not in memory:
+            memory[user] = [{'role': 'system', 'content': '你是一个qq聊天机器人,请每句话尽量简短,最好不要超过20个字'}]
+        memory[user].append({'role': character, 'content': data['message'][0]['data']['text']})
+    else:
+        user = data['user_id']
+        character = 'user'
+        if user not in memory:
+            memory[user] = [{'role': 'system', 'content': '你是一个qq聊天机器人,请每句话尽量简短,最好不要超过20个字'}]
+        memory[user].append({'role': character, 'content': data['message'][0]['data']['text']})
+
+async def re_chat(openai_client: OpenaiClient, messages: list, count: int) -> dict: # type: ignore
+    for _ in range(count):
+        try:
+            return await openai_client.chat(
+                messages=messages
+            ) # type: ignore
+        except Exception as e:
+            logging.error(f"110:{e}")
+
+async def re_send(ws: ClientConnection, messages: list, count: int, userid: str) -> ClientConnection:
+    for _ in range(count):
+        try:
+            ws = await send_message_to_user(ws, userid, messages) # type: ignore
+            return ws
+        except Exception as e:
+            logging.error(f"118:{e}")
+            ws = await reconnect()
+            return ws
+    return ws
+
+async def sse_listener(ws: ClientConnection, openai_client: OpenaiClient, memory: dict):
+    await AioHttpClient.init('http://10.0.0.1:3000', 'Qqwe123123')
+    while True:
+        await asyncio.sleep(1)
+        try:
+            async for event in AioHttpClient.listen_sse('/_events'):
+
+                event = extract_event_info(event) # type: ignore
+                insert_to_memory_dict(event, memory)
+                
+                if str(event['user_id']) != '3801230796':
+                    response = await re_chat(openai_client, memory[event['user_id']], 3)
+                    choice = openai_client.get_message_content(response)
+                    ws = await re_send(ws, choice, 3, event['user_id'])
+
+
+        except Exception as e:
+            logging.error(f"142:{e}")
+
 
 async def main() -> None:
     ws = await reconnect()
-    await send_message_to_user(ws, 2801798663, 'test')
+    await send_message_to_user(ws, '2801798663', 'test')
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -11,7 +11,7 @@ from typing import Dict, List, Any
 from app.util.openai_client import OpenaiClient
 from app.model.chat import *
 
-ws_global = None
+ws_global: ClientConnection = None # type: ignore
 messages: Dict[str, List[Any]] = {}
 
 
@@ -24,77 +24,11 @@ async def lifespan(app: FastAPI):
     global ws_global
     ws_global = await connect(
         'ws://10.0.0.1:3002',
-        additional_headers={'Authorization': 'Bearer Qqwe123123'}
+        additional_headers={'Authorization': 'Bearer Qqwe123123'},
+        ping_interval=None,
         )  # 启动逻辑
     
-
-    await AioHttpClient.init('http://10.0.0.1:3000', 'Qqwe123123')
-
-    async def sse_listener():
-        while True:
-            await asyncio.sleep(1)
-            try:
-                async for event in AioHttpClient.listen_sse('/_events'):
-
-                    event = extract_event_info(event) # type: ignore
-                    print("收到 SSE:", event) # type: ignore
-                    data = event['message']
-                    if str(event['user_id']) == '3801230796':
-                        print('回复人:机器人自己')
-
-                        user = event['target_id']
-                        character = 'assistant'
-                        if user not in messages:
-                            messages[user] = [{'role': 'system', 'content': '你是一个qq聊天机器人,请每句话尽量简短,最好不要超过20个字'}]
-                        messages[user].append({'role': character, 'content': data[0]['data']['text']})
-
-
-
-
-                    else:
-                        
-
-                        user = event['user_id']
-                        print(user)
-                        character = 'user'
-
-                        if user not in messages:
-                            messages[user] = [{'role': 'system', 'content': '你是一个qq聊天机器人,请每句话尽量简短,最好不要超过20个字'}]
-                        messages[user].append({'role': character, 'content': data[0]['data']['text']})
-                        print(messages)
-                        print('尝试调用')
-                        print(messages[user])
-                        for _ in range(3):
-                            try:
-                                response = await openai_client.chat(
-                                    messages=messages[user]
-                                ) # type: ignore
-                                break
-                            except Exception as e:
-                                print(e)
-                        else:
-                            continue
-
-                        print(f'尝试完成{response}')
-                        choice = openai_client.get_message_content(response)
-                        print(choice)
-                        global ws_global
-                        for _ in range(3):
-                            try:
-                                ws_global = await send_message_to_user(ws_global, '2801798663', choice) # type: ignore
-                                break
-                            except Exception as e:
-                                print(e)
-                                ws_global = await reconnect()
-                        else:
-                            continue
-            except Exception as e:
-                print(e)
-                    
-
-
-    
-    sse_task = asyncio.create_task(sse_listener())
+    sse_task = asyncio.create_task(sse_listener(ws_global, openai_client, messages))
 
     print("启动")
     yield
