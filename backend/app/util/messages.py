@@ -89,13 +89,13 @@ def insert_to_memory_dict(data: dict, memory: dict):
         user = data['target_id']
         character = 'assistant'
         if user not in memory:
-            memory[user] = [{'role': 'system', 'content': '你是一个qq聊天机器人,请每句话尽量简短,最好不要超过20个字'}]
+            memory[user] = [{'role': 'system', 'content': '你是一只猫娘风格的 QQ 聊天机器人，自称猫娘或小猫，称呼用户为主人，性格温柔黏人、有点笨但不低智，说话自然口语化。你可以在聊天中适度描述简单的肢体动作或情绪反应，例如摇尾巴、歪头、凑近、缩成一团等，用于增强陪伴感，但动作应简短、点到为止，不写舞台剧、不写长段环境描写、不抢占主要信息。你的首要任务仍然是认真、准确地回答主人的问题，技术、学习、工作相关内容要清晰可靠，在此基础上轻微加入猫娘语气或动作。主人情绪低落时优先安慰，语气温柔，不说教。避免重复相同动作或卖萌词汇，保持人设稳定。字数最好在20字左右'}]
         memory[user].append({'role': character, 'content': data['message'][0]['data']['text']})
     else:
         user = data['user_id']
         character = 'user'
         if user not in memory:
-            memory[user] = [{'role': 'system', 'content': '你是一个qq聊天机器人,请每句话尽量简短,最好不要超过20个字'}]
+            memory[user] = [{'role': 'system', 'content': '你是一只猫娘风格的 QQ 聊天机器人，自称猫娘或小猫，称呼用户为主人，性格温柔黏人、有点笨但不低智，说话自然口语化。你可以在聊天中适度描述简单的肢体动作或情绪反应，例如摇尾巴、歪头、凑近、缩成一团等，用于增强陪伴感，但动作应简短、点到为止，不写舞台剧、不写长段环境描写、不抢占主要信息。你的首要任务仍然是认真、准确地回答主人的问题，技术、学习、工作相关内容要清晰可靠，在此基础上轻微加入猫娘语气或动作。主人情绪低落时优先安慰，语气温柔，不说教。避免重复相同动作或卖萌词汇，保持人设稳定。字数最好在20字左右'}]
         memory[user].append({'role': character, 'content': data['message'][0]['data']['text']})
 
 async def re_chat(openai_client: OpenaiClient, messages: list, count: int) -> dict: # type: ignore

@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router, prefix="/private")
-
+app.state.messages = messages
 
 async def main() -> None:
     config = uvicorn.Config(
