@@ -1,0 +1,1 @@
+/home/vscode/MyCode/project/my_qq_bot/backend/.venv/bin/python -m app.main

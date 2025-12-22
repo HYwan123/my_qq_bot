@@ -112,6 +112,8 @@ class PostgreClient:
                 user_id
             )
         
+
+        
 async def main() -> None:
     postgre_client = PostgreClient()
     await postgre_client.connect()

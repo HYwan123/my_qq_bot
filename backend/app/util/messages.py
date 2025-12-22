@@ -5,6 +5,10 @@ from websockets.asyncio.client import connect
 from app.util.openai_client import OpenaiClient
 from app.util.aio_http_client import AioHttpClient
 import logging
+from collections import deque
+from app.database.postgre_client import PostgreClient
+
+post_client = PostgreClient()
 
 async def reconnect() -> ClientConnection:
     logging.warning("触发重连")
@@ -135,7 +139,9 @@ async def sse_listener(ws: ClientConnection, openai_client: OpenaiClient, memory
 
 
         except Exception as e:
-            logging.error(f"142:{e}")
+            logging.error(f"sse_linseener_error:{e}")
+
+
 
 
 async def main() -> None:
