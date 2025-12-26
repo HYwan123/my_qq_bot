@@ -13,7 +13,7 @@ from app.model.chat import *
 
 ws_global: ClientConnection = None # type: ignore
 messages: Dict[str, List[Any]] = {}
-
+message_cursor: Dict[str, int]
 
 
 @asynccontextmanager

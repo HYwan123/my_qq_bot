@@ -19,7 +19,10 @@ data_wan = {
     },
     'echo': 'echo'
 }
-
+@router.get('/updata_messages')
+async def updata_messages(request: Request):
+    """写一半写mcp去了"""
+    return True
 
 @router.get('/messages')
 async def get_messages(request: Request):
