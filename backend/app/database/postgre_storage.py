@@ -5,7 +5,7 @@ import logging
 from asyncpg import Pool
 from typing import cast
 
-class PostgreClient:
+class PostgreStorage:
     _instance = None
     pool: Pool
 
@@ -115,7 +115,7 @@ class PostgreClient:
 
         
 async def main() -> None:
-    postgre_client = PostgreClient()
+    postgre_client = PostgreStorage()
     await postgre_client.connect()
 
     result = await postgre_client.table_exists('public', 'test1')

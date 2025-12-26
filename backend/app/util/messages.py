@@ -2,13 +2,13 @@ import asyncio
 from websockets import ClientConnection
 import json
 from websockets.asyncio.client import connect
-from app.util.openai_client import OpenaiClient
-from app.util.aio_http_client import AioHttpClient
+from app.client.openai_client import OpenaiClient
+from app.client.aio_http_client import AioHttpClient
 import logging
 from collections import deque
-from app.database.postgre_client import PostgreClient
+from app.database.postgre_storage import PostgreStorage
 
-post_client = PostgreClient()
+post_client = PostgreStorage()
 
 async def reconnect() -> ClientConnection:
     logging.warning("触发重连")

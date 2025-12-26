@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
-from app.util.mcp_clinet import McpClient
+from app.client.mcp_clinet import McpClient
 
 class Settings(BaseSettings):
 
@@ -62,11 +62,13 @@ class OpenaiClient:
             tool_message = {
                 "role": "assistant",
                 "tool_call_id": first_call['id'],
-                "content": str(function_result.content[0].text)  # 假设只取第一个文本结果
+                "content": str(function_result.content[0].text)  #type: ignore
             }
             print(tool_message)
+            messages.append(tool_message)
+            print(messages)
             # 再次发送给模型
-            result = await self.chat([tool_message])
+            result = await self.chat(messages)
             
         return result
 
@@ -110,8 +112,7 @@ async def main() -> None:
     
     print(get_settings().api_key)
     client = OpenaiClient()
-    tools = await client.mcp_client.list_tools_to_dict()
-    result = await client.chat_with_tools([{'role': 'system', 'content': '请试着调用工具'},
+    result = await client.chat_with_tools([{'role': 'system', 'content': '你是一个qq聊天猫娘,回答尽量在10字内'},
                                            {"role": "user", "content": "请调用 get_weather 工具获取今天的天气"}])
     print(type(result))
     print(result)
